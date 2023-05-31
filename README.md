@@ -9,13 +9,48 @@ Este proyecto busca crear un buscador de propiedades con el objetivo de proporci
 
 Con este buscador, los usuarios podrán realizar búsquedas personalizadas basadas en diferentes criterios, como ubicación, tipo de propiedad, precio, tamaño, y más.
 
+---
+
 
 ## Tecnologías Utilizadas
 - **Python** será el lenguaje principal de programación para desarrollar los microservicios del backend. Además, utilizaré los siguientes paquetes y bibliotecas: `unittest` para escribir y ejecutar pruebas, `mysql-connector-python` para la conexión a la base de datos MySQL, `Pydantic` para la validación de datos y `Uvicorn` para el servidor web ASGI.
 - **Docker** para facilitar la creación y despliegue de los microservicios en un entorno aislado.
+
+---
 
 
 ## Enfoque de Desarrollo
 En este proyecto, seguiré una metodología de Desarrollo Dirigido por Pruebas (TDD). Esto implica que comenzaré creando pruebas unitarias que cubran diferentes aspectos de los microservicios, desde la conexión a la base de datos hasta la respuesta esperada de los endpoints. Utilizaré PEP8 como guía de estilo de codificación para mantener un código limpio y legible.
 
 Además, tendré en cuenta las condiciones y la información que no se debe mostrar en los endpoints, asegurándome de implementar los métodos correspondientes para manejar estos casos.
+
+---
+
+
+## API Endpoint
+
+- **/real-estates**
+
+	*Parámetros soportados*  (Query string)
+
+	|Parámetro|Tipo|Ejemplo|
+	|---|---|---|
+	|status|`str`|pre_venta|
+	|city|`str`|bogota|
+	|year|`int`|2000|
+
+---
+
+
+## Como ejecutarlo
+1. Configura las credenciales de la base de datos en el archivo `.env` en el directorio backend, guíate en el archivo [.env-sample](./backend/.env-sample) que se encuentra en el mismo directorio
+2. Para ejecutar las pruebas unitarias, ejecute el siguiente comando
+	```bash
+	docker compose -f docker-compose.yml -f dockerfiles/compose/docker-compose.test.yml run --rm backend
+	```
+3. Para ejecutar el microservicio, ejecute el siguiente comando
+	```bash
+	docker compose -f docker-compose.yml -f dockerfiles/compose/docker-compose.local.yml up backend
+	```
+
+---

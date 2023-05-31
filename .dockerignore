@@ -1,0 +1,12 @@
+.git/
+db/
+.dockerignore
+.editorconfig
+.gitignore
+.env
+.env-sample
+backend/.venv
+docker-compose.yml
+LICENSE
+README.en.md
+README.md
