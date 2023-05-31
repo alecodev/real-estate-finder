@@ -1,9 +1,10 @@
+import base64
 import json
 from http import HTTPStatus
-from typing import Any, Literal
+from typing import Any
 
 from src.db import DB
-from src.router import APIRouter
+from src.router import APIRouter, Header
 
 app = APIRouter()
 
@@ -13,7 +14,7 @@ def get_real_estates(
     status: list | None = None,
     year: list | None = None,
     city: list | None = None
-) -> tuple[Literal[HTTPStatus.OK], str]:
+) -> tuple[HTTPStatus, str | None]:
 
     conditions = ''
     data_conditions: list[Any] = []
@@ -87,3 +88,57 @@ def get_real_estates(
     )
 
     return HTTPStatus.OK, json.dumps(db.results)
+
+
+@app.post('/real-estates/{id}/likes')
+def post_real_estates_likes(
+    id: int,
+    headers: Header
+) -> tuple[HTTPStatus, str | None]:
+
+    _authorization = headers.Authorization
+    if _authorization is None or (not _authorization.startswith('Basic ')):
+        return HTTPStatus.UNAUTHORIZED, None
+
+    try:
+        authorization = base64.b64decode(
+            (_authorization[6:]).encode('utf-8')).decode('utf-8').split(':')
+    except Exception as e:
+        return HTTPStatus.BAD_REQUEST, None
+    else:
+        if len(authorization) != 2:
+            return HTTPStatus.UNAUTHORIZED, None
+
+    _user, _pass = authorization
+
+    db = DB()
+
+    db.execute(
+        "SELECT id FROM auth_user WHERE username = %s AND password = %s AND is_active = %s LIMIT 1",
+        data=[_user, _pass, 1],
+        fields=True
+    )
+
+    if len(db.results) == 0:
+        return HTTPStatus.UNAUTHORIZED, None
+
+    id_user = db.results[0]['id']
+
+    db.execute(
+        "SELECT id FROM property WHERE id = %s LIMIT 1",
+        data=[id],
+        fields=True
+    )
+
+    if len(db.results) == 0:
+        return HTTPStatus.FORBIDDEN, None
+
+    id_like = db.execute(
+        "INSERT INTO property_likes SET property_id = %s, user_id = %s",
+        data=[id, id_user],
+        fields=False
+    )
+    if id_like is not None and id_like > 0:
+        return HTTPStatus.OK, json.dumps([])
+    else:
+        return HTTPStatus.INTERNAL_SERVER_ERROR, json.dumps([])

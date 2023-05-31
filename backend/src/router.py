@@ -4,11 +4,17 @@ from http import HTTPStatus
 from typing import Any, Awaitable, Callable, MutableMapping, Tuple
 from urllib.parse import parse_qs
 
+from pydantic import BaseModel
+
 Scope = MutableMapping[str, Any]
 Message = MutableMapping[str, Any]
 
 Receive = Callable[[], Awaitable[Message]]
 Send = Callable[[Message], Awaitable[None]]
+
+
+class Header(BaseModel):
+    Authorization: str | None
 
 
 class APIRouter(object):
@@ -31,6 +37,14 @@ class APIRouter(object):
         HTTPStatus.BAD_REQUEST: {
             'headers': [[b'content-type', b'text/plain']],
             'body': str(HTTPStatus.BAD_REQUEST.value) + ' ' + HTTPStatus.BAD_REQUEST.phrase
+        },
+        HTTPStatus.UNAUTHORIZED: {
+            'headers': [[b'content-type', b'text/plain']],
+            'body': str(HTTPStatus.UNAUTHORIZED.value) + ' ' + HTTPStatus.UNAUTHORIZED.phrase
+        },
+        HTTPStatus.FORBIDDEN: {
+            'headers': [[b'content-type', b'text/plain']],
+            'body': str(HTTPStatus.FORBIDDEN.value) + ' ' + HTTPStatus.FORBIDDEN.phrase
         },
         HTTPStatus.NOT_FOUND: {
             'headers': [[b'content-type', b'text/plain']],
@@ -128,6 +142,8 @@ class APIRouter(object):
         if body_parameters:
             parameters['body'] = json.loads(body_parameters)
 
+        parameters['--headers'] = scope['headers']
+
         try:
             code_status, data = self._endpoints[path_endpoint][method][1](
                 **parameters)
@@ -140,11 +156,29 @@ class APIRouter(object):
 
     def set_types_args(self, kwargs: dict[str, Any], annotations: dict[str, Any]) -> dict[str, Any]:
         kwargs_types: dict[str, Any] = {}
+
+        headers_request = kwargs.pop('--headers', None)
+        for key, _type in annotations.items():
+            if _type is Header and headers_request is not None:
+                _fields = {
+                    key.lower(): key for key in Header.__fields__.keys()}
+
+                _headers = {}
+                for k_request, v_request in headers_request:
+                    k_request = k_request.decode('utf-8')
+                    k_lower = k_request.lower()
+                    if k_lower in _fields:
+                        _headers[_fields[k_lower]] = v_request.decode('utf-8')
+
+                kwargs_types[key] = _type(**_headers)
+
         for key, value in kwargs.items():
             kwargs_types[key] = value
             if key in annotations and callable(annotations[key]):
                 if type(value) is dict:
                     kwargs_types[key] = annotations[key](**value)
+                elif type(value) is Header and annotations[key] is Header:
+                    kwargs_types[key] = value
                 else:
                     kwargs_types[key] = annotations[key](value)
         return kwargs_types
@@ -160,7 +194,7 @@ class APIRouter(object):
 
             def wrapper(*args, **kwargs):
                 search_args = (
-                    lambda arg: arg not in func.__code__.co_varnames)
+                    lambda arg: arg not in func.__code__.co_varnames and arg != '--headers')
                 args_error = next(filter(search_args, kwargs.keys()), None)
                 if args_error is not None:
                     return HTTPStatus.BAD_REQUEST, None

@@ -18,7 +18,8 @@ class RealEstate(unittest.TestCase):
     def test_response_data(self) -> None:
         try:
             _, response = get_real_estates()
-            data_response = json.loads(response)
+            data_response = json.loads(
+                response if response is not None else '')
         except TypeError:
             self.fail("Unexpected error deserializing data")
         except:
@@ -32,7 +33,7 @@ class RealEstate(unittest.TestCase):
 
     def test_response_data_status(self) -> None:
         _, response = get_real_estates()
-        data_response = json.loads(response)
+        data_response = json.loads(response if response is not None else '')
         if len(data_response) == 0:
             self.fail("Error get_real_estates is not returning data")
 
@@ -47,13 +48,13 @@ class RealEstate(unittest.TestCase):
 
     def test_response_data_status_filter(self) -> None:
         _, response = get_real_estates(status=['comprado'])
-        data_response = json.loads(response)
+        data_response = json.loads(response if response is not None else '')
         if len(data_response) > 0:
             self.fail(
                 "Error, get_real_estates is returning data when filtering for wrong status")
 
         _, response = get_real_estates(status=['pre_venta'])
-        data_response = json.loads(response)
+        data_response = json.loads(response if response is not None else '')
 
         status_data = list(
             set(map(lambda item: item['status'], data_response)))
@@ -63,7 +64,7 @@ class RealEstate(unittest.TestCase):
 
     def test_response_data_construction_year_filter(self) -> None:
         _, response = get_real_estates(year=['2021'])
-        data_response = json.loads(response)
+        data_response = json.loads(response if response is not None else '')
         if len(data_response) == 0:
             self.fail(
                 "Error, get_real_estates is not returning data when filtering for construction year 2021")
@@ -71,7 +72,7 @@ class RealEstate(unittest.TestCase):
         self.assertEqual(len(data_response), 7)
 
         _, response = get_real_estates(year=['2021', '2000'])
-        data_response = json.loads(response)
+        data_response = json.loads(response if response is not None else '')
         if len(data_response) == 0:
             self.fail(
                 "Error, get_real_estates is not returning data when filtering for construction year 2021 and 2000")
@@ -80,7 +81,7 @@ class RealEstate(unittest.TestCase):
 
     def test_response_data_construction_city_filter(self) -> None:
         _, response = get_real_estates(city=['bogota'])
-        data_response = json.loads(response)
+        data_response = json.loads(response if response is not None else '')
         if len(data_response) == 0:
             self.fail(
                 "Error, get_real_estates is not returning data when filtering for city bogota")
@@ -88,7 +89,7 @@ class RealEstate(unittest.TestCase):
         self.assertEqual(len(data_response), 7)
 
         _, response = get_real_estates(city=['bogota', 'medellin'])
-        data_response = json.loads(response)
+        data_response = json.loads(response if response is not None else '')
         if len(data_response) == 0:
             self.fail(
                 "Error, get_real_estates is not returning data when filtering for city bogota and medellin")
@@ -101,7 +102,7 @@ class RealEstate(unittest.TestCase):
             year=['2000', '2021'],
             city=['bogota']
         )
-        data_response = json.loads(response)
+        data_response = json.loads(response if response is not None else '')
         if len(data_response) == 0:
             self.fail(
                 "Error, get_real_estates is not returning data when filtering for city bogota and status pre_venta and construction year between 2000 and 2021")
